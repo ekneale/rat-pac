@@ -35,7 +35,12 @@ namespace RAT {
   // WGS: We have to start from some value of sin2theta; use the stanard-model value:
   const double ESgen::WEAKANGLE = 0.2227;
   const int    ESgen::NTRIAL    = 10000;
+<<<<<<< HEAD
  
+=======
+  const std::string ESgen::SPEC = "closest_boulby";
+
+>>>>>>> 496fd2d9a6a298b4d3eacad8373e2ee8b10fe780
   ESgen::ESgen()
   {
     // Initialize everything.
@@ -44,6 +49,7 @@ namespace RAT {
     // Create a messenger to allow the user to change some ES parameters.
     messenger = new ESgenMessenger(this);
 
+<<<<<<< HEAD
     // Get parameters from database. Note that we get the flux from the
     // IBD values; we assume that the flux for ES is the same as the
     // flux for IBD.
@@ -51,6 +57,14 @@ namespace RAT {
 
     Emin = libd->GetD("emin");
     Emax = libd->GetD("emax");
+=======
+    // Initialise the spectrum.
+    G4String spec = "closest_boulby";
+    DBLinkPtr _lspec    = DB::Get()->GetLink("ES", spec);  // default to Boulby spectrum
+    std::vector<double> spec_E = _lspec->GetDArray("spec_e");
+    Emin = 0.;
+    Emax = 0.;
+>>>>>>> 496fd2d9a6a298b4d3eacad8373e2ee8b10fe780
     // Flux function
     rmpflux.Set(libd->GetDArray("spec_e"), libd->GetDArray("spec_flux"));
   
@@ -60,6 +74,8 @@ namespace RAT {
     // Get the electron mass.
     G4ParticleDefinition* electron = G4ParticleTable::GetParticleTable()->FindParticle("e-");  
     massElectron = electron->GetPDGMass();
+    // Do we use the cross section or is it included?
+    ApplyCrossSection = _lspec->GetI("apply_xs");
   }
 
 
@@ -76,6 +92,23 @@ namespace RAT {
 
   CLHEP::HepLorentzVector ESgen::GenerateEvent(const G4ThreeVector& theNeutrino)
   {
+<<<<<<< HEAD
+=======
+    // Get the spectrum from user input; defaults to closest_boulby.
+    G4String spec = GetSpectrum();
+    DBLinkPtr _lspec    = DB::Get()->GetLink("ES", spec);
+    // Get parameters from database.
+    // Read in the energy values from the spectrum.
+    std::vector<double> spec_E = _lspec->GetDArray("spec_e");
+    Emin = spec_E.front();
+    Emax = spec_E.back();
+
+    // Create the flux function from the spectrum.
+    rmpflux.Set(_lspec->GetDArray("spec_e"), _lspec->GetDArray("spec_mag"));
+    // Find the maximum flux from the spectrum.
+    std::vector<double> spec_F = _lspec->GetDArray("spec_mag");
+    FluxMax = *max_element(spec_F.begin(),spec_F.end());
+>>>>>>> 496fd2d9a6a298b4d3eacad8373e2ee8b10fe780
     //
     //  Check if the maximum throwing number has been set.
     //
@@ -90,12 +123,31 @@ namespace RAT {
       // Pick a random E and Nu.
       E = GetRandomNumber(Emin, Emax);
       Nu = GetRandomNumber(0., E);
+<<<<<<< HEAD
       
       // Decided whether to draw again based on relative cross-section.
       float XCtest = XSecNorm * FluxMax * GetRandomNumber(0.,1.);
       double XCWeight = GetXSec(E, Nu);
       double FluxWeight = rmpflux(E);
       passed = XCWeight * FluxWeight > XCtest;
+=======
+      if (ApplyCrossSection)
+      { 
+        // Decided whether to draw again based on relative cross-section.
+        // Check that the 
+        float XCtest = XSecNorm * FluxMax * GetRandomNumber(0.,1.);
+        double XCWeight = GetXSec(E, Nu);
+        double FluxWeight = rmpflux(E);
+        passed = XCWeight * FluxWeight > XCtest;
+      }
+      else
+      {
+        float XCtest = XSecNorm * FluxMax * GetRandomNumber(0.,1.);
+        double FluxWeight = rmpflux(E);
+        passed = FluxWeight > XCtest;
+      }
+
+>>>>>>> 496fd2d9a6a298b4d3eacad8373e2ee8b10fe780
     }
 
     //
